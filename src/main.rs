@@ -20,6 +20,18 @@ struct Args {
     /// Ticks per beat
     #[arg(short, long, default_value_t = 576)]
     ticks_per_beat: usize,
+
+    /// Track name
+    #[arg(long)]
+    track_name: Option<String>,
+
+    /// Track copyright
+    #[arg(long)]
+    track_copyright: Option<String>,
+
+    /// Track comment
+    #[arg(long)]
+    track_comment: Option<String>,
 }
 
 // cargo run --release -- test/test.mmpz tmp/test.mid
@@ -35,6 +47,27 @@ fn main() {
     ));
 
     let mut midi_track = Track::new();
+
+    if let Some(ref track_name) = args.track_name {
+        midi_track.push(TrackEvent {
+            delta: u28::from(0),
+            kind: TrackEventKind::Meta(MetaMessage::TrackName(track_name.as_bytes())),
+        });
+    }
+
+    if let Some(ref track_copyright) = args.track_copyright {
+        midi_track.push(TrackEvent {
+            delta: u28::from(0),
+            kind: TrackEventKind::Meta(MetaMessage::Copyright(track_copyright.as_bytes())),
+        });
+    }
+
+    if let Some(ref track_comment) = args.track_comment {
+        midi_track.push(TrackEvent {
+            delta: u28::from(0),
+            kind: TrackEventKind::Meta(MetaMessage::Text(track_comment.as_bytes())),
+        });
+    }
 
     midi_track.push(TrackEvent {
         delta: u28::from(0),
