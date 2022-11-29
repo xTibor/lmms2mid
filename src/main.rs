@@ -5,5 +5,5 @@ use lmms_model::LmmsProject;
 
 fn main() {
     let lmms_project = LmmsProject::load_compressed(Path::new("test/test.mmpz"));
-    println!("{:?}", lmms_project);
+    println!("{:#?}", lmms_project);
 }
