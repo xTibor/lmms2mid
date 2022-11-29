@@ -4,7 +4,7 @@ mod lmms_model;
 use lmms_model::LmmsProject;
 
 use clap::Parser;
-use midly::num::{u15, u24, u28};
+use midly::num::{u15, u24, u28, u4};
 use midly::{Format, Header, MetaMessage, Smf, Timing, Track, TrackEvent, TrackEventKind};
 
 /// A less broken MIDI-exporter for LMMS
@@ -36,10 +36,68 @@ struct Args {
 
 // cargo run --release -- test/test.mmpz tmp/test.mid
 
+pub struct AbsoluteTrackEvent<'a> {
+    //// When this event occurs in absolute MIDI ticks
+    pub ticks: usize,
+
+    /// When this event really started (NoteOn for NoteOff events)
+    pub ticks_event_start: usize,
+
+    /// MIDI event data
+    pub kind: TrackEventKind<'a>,
+}
+
 fn main() {
     let args = Args::parse();
     let lmms_project =
         LmmsProject::load_compressed(&args.input_path).expect("Failed to load LMMS project file");
+
+    // Sanity check for LMMS instrument/percussion track counts
+    {
+        let lmms_sf2_instrument_track_count = lmms_project
+            .song
+            .track_container
+            .tracks
+            .iter()
+            .filter_map(|track| track.instrument_track.instrument.sf2_player.as_ref())
+            .filter(|sf2_player| sf2_player.bank != 128)
+            .count();
+
+        if lmms_sf2_instrument_track_count > 15 {
+            eprintln!("error: LMMS project has more SF2 instrument tracks than available MIDI channels ({lmms_sf2_instrument_track_count}/15)");
+            return;
+        }
+
+        let lmms_sf2_percussion_track_count = lmms_project
+            .song
+            .track_container
+            .tracks
+            .iter()
+            .filter_map(|track| track.instrument_track.instrument.sf2_player.as_ref())
+            .filter(|sf2_player| sf2_player.bank == 128)
+            .count();
+
+        if lmms_sf2_percussion_track_count > 1 {
+            eprintln!("error: LMMS project should only have at most one SF2 percussion track (found {lmms_sf2_percussion_track_count} tracks)");
+            return;
+        }
+    }
+
+    // LMMS track -> MIDI channel assignment
+    let track_channel_assignment = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]
+        .into_iter()
+        .map(u4::from)
+        .zip(
+            lmms_project
+                .song
+                .track_container
+                .tracks
+                .iter()
+                .filter_map(|track| track.instrument_track.instrument.sf2_player.as_ref()),
+        )
+        .collect::<Vec<_>>();
+
+    println!("{track_channel_assignment:?}");
 
     let mut midi_document = Smf::new(Header::new(
         Format::SingleTrack,
@@ -47,6 +105,7 @@ fn main() {
     ));
 
     let mut midi_track = Track::new();
+    //let mut midi_track_events = Vec::new();
 
     if let Some(ref track_name) = args.track_name {
         midi_track.push(TrackEvent {
