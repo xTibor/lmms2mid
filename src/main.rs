@@ -56,7 +56,7 @@ fn main() {
     {
         let lmms_sf2_instrument_track_count = lmms_project
             .sf2_tracks()
-            .filter(|track| track.is_instrument_track())
+            .filter(|lmms_track| lmms_track.is_instrument_track())
             .count();
 
         if lmms_sf2_instrument_track_count > 15 {
@@ -66,7 +66,7 @@ fn main() {
 
         let lmms_sf2_percussion_track_count = lmms_project
             .sf2_tracks()
-            .filter(|track| track.is_precussion_track())
+            .filter(|lmms_track| lmms_track.is_precussion_track())
             .count();
 
         if lmms_sf2_percussion_track_count > 1 {
@@ -87,7 +87,7 @@ fn main() {
                 .zip(
                     lmms_project
                         .sf2_tracks()
-                        .filter(|track| track.is_instrument_track()),
+                        .filter(|lmms_track| lmms_track.is_instrument_track()),
                 ),
         );
 
@@ -96,10 +96,11 @@ fn main() {
             [9].into_iter().map(u4::from).zip(
                 lmms_project
                     .sf2_tracks()
-                    .filter(|track| track.is_precussion_track()),
+                    .filter(|lmms_track| lmms_track.is_precussion_track()),
             ),
         );
 
+        results.sort_by_key(|(midi_channel, _lmms_track)| *midi_channel);
         results
     };
 
