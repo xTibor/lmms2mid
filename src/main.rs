@@ -60,8 +60,8 @@ fn main() {
             .count();
 
         if lmms_sf2_instrument_track_count > 15 {
-            eprintln!("error: LMMS project has more SF2 instrument tracks than available MIDI channels ({lmms_sf2_instrument_track_count}/15)");
-            return;
+            eprintln!("note: LMMS project has more SF2 instrument tracks than available MIDI channels ({lmms_sf2_instrument_track_count}/15)");
+            eprintln!("note: unassignable instrument tracks will be dropped");
         }
 
         let lmms_sf2_percussion_track_count = lmms_project
@@ -70,23 +70,38 @@ fn main() {
             .count();
 
         if lmms_sf2_percussion_track_count > 1 {
-            eprintln!("error: LMMS project should only have at most one SF2 percussion track (found {lmms_sf2_percussion_track_count} tracks)");
-            return;
+            eprintln!("note: LMMS project should only have at most one SF2 percussion track (found {lmms_sf2_percussion_track_count} tracks)");
+            eprintln!("note: unassignable percussion tracks will be dropped");
         }
     }
 
     // LMMS track -> MIDI channel assignment
-    let track_channel_assignment = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]
-        .into_iter()
-        .map(u4::from)
-        .zip(
-            lmms_project
-                .sf2_tracks()
-                .filter(|track| track.is_instrument_track()),
-        )
-        .collect::<Vec<_>>();
+    let track_channel_assignment = {
+        let mut results = Vec::new();
 
-    // TODO: Assign percussion track
+        // Instrument tracks
+        results.extend(
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]
+                .into_iter()
+                .map(u4::from)
+                .zip(
+                    lmms_project
+                        .sf2_tracks()
+                        .filter(|track| track.is_instrument_track()),
+                ),
+        );
+
+        // Percussion track
+        results.extend(
+            [9].into_iter().map(u4::from).zip(
+                lmms_project
+                    .sf2_tracks()
+                    .filter(|track| track.is_precussion_track()),
+            ),
+        );
+
+        results
+    };
 
     let mut midi_document = Smf::new(Header::new(
         Format::SingleTrack,
