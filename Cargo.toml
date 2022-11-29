@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { version = "4.0.29", features = ["derive"] }
+midly = "0.5.2"
 miniz_oxide = { version = "0.6.2", features = ["std"] }
 strong-xml = "0.6"
