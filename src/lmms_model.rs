@@ -5,6 +5,8 @@ use std::{fs, str};
 use miniz_oxide::inflate::decompress_to_vec_zlib;
 use strong_xml::XmlRead;
 
+pub const LMMS_TICKS_PER_BEAT: usize = 12;
+
 #[derive(Debug, XmlRead)]
 #[xml(tag = "lmms-project")]
 pub struct LmmsProject {
@@ -263,6 +265,32 @@ impl LmmsProject {
         let uncompressed_bin = decompress_to_vec_zlib(&compressed_bin[4..])?;
         let uncompressed_xml = str::from_utf8(&uncompressed_bin)?;
 
-        Ok(LmmsProject::from_str(&uncompressed_xml)?)
+        Ok(LmmsProject::from_str(uncompressed_xml)?)
+    }
+
+    pub fn sf2_tracks(&self) -> impl Iterator<Item = &LmmsTrack> {
+        self.song
+            .track_container
+            .tracks
+            .iter()
+            .filter(|track| track.instrument_track.instrument.sf2_player.is_some())
+    }
+}
+
+impl LmmsTrack {
+    pub fn sf2_player(&self) -> &LmmsSf2Player {
+        self.instrument_track
+            .instrument
+            .sf2_player
+            .as_ref()
+            .expect("Not an SF2 track")
+    }
+
+    pub fn is_instrument_track(&self) -> bool {
+        self.sf2_player().bank != 128
+    }
+
+    pub fn is_precussion_track(&self) -> bool {
+        self.sf2_player().bank == 128
     }
 }

@@ -55,12 +55,8 @@ fn main() {
     // Sanity check for LMMS instrument/percussion track counts
     {
         let lmms_sf2_instrument_track_count = lmms_project
-            .song
-            .track_container
-            .tracks
-            .iter()
-            .filter_map(|track| track.instrument_track.instrument.sf2_player.as_ref())
-            .filter(|sf2_player| sf2_player.bank != 128)
+            .sf2_tracks()
+            .filter(|track| track.is_instrument_track())
             .count();
 
         if lmms_sf2_instrument_track_count > 15 {
@@ -69,12 +65,8 @@ fn main() {
         }
 
         let lmms_sf2_percussion_track_count = lmms_project
-            .song
-            .track_container
-            .tracks
-            .iter()
-            .filter_map(|track| track.instrument_track.instrument.sf2_player.as_ref())
-            .filter(|sf2_player| sf2_player.bank == 128)
+            .sf2_tracks()
+            .filter(|track| track.is_precussion_track())
             .count();
 
         if lmms_sf2_percussion_track_count > 1 {
@@ -89,15 +81,12 @@ fn main() {
         .map(u4::from)
         .zip(
             lmms_project
-                .song
-                .track_container
-                .tracks
-                .iter()
-                .filter_map(|track| track.instrument_track.instrument.sf2_player.as_ref()),
+                .sf2_tracks()
+                .filter(|track| track.is_instrument_track()),
         )
         .collect::<Vec<_>>();
 
-    println!("{track_channel_assignment:?}");
+    // TODO: Assign percussion track
 
     let mut midi_document = Smf::new(Header::new(
         Format::SingleTrack,
