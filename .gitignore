@@ -1,2 +1,3 @@
-/target
 **/*.mmpz.bak
+/target
+/tmp
