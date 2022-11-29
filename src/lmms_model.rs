@@ -101,6 +101,102 @@ pub struct LmmsTrack {
 
     #[xml(attr = "solo")]
     pub solo: usize,
+
+    #[xml(child = "instrumenttrack")]
+    pub instrument_track: LmmsInstrumentTrack,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "instrumenttrack")]
+pub struct LmmsInstrumentTrack {
+    #[xml(attr = "vol")]
+    pub volume: usize,
+
+    #[xml(attr = "pan")]
+    pub panning: isize,
+
+    #[xml(attr = "pitchrange")]
+    pub pitch_range: usize,
+
+    #[xml(attr = "lastkey")]
+    pub last_key: usize,
+
+    #[xml(attr = "fxch")]
+    pub fx_channel: usize,
+
+    #[xml(attr = "usemasterpitch")]
+    pub use_master_pitch: usize,
+
+    #[xml(attr = "pitch")]
+    pub pitch: f32,
+
+    #[xml(attr = "firstkey")]
+    pub first_key: usize,
+
+    #[xml(attr = "basenote")]
+    pub base_note: usize,
+
+    #[xml(attr = "enablecc")]
+    pub enable_cc: usize,
+
+    #[xml(child = "instrument")]
+    pub instrument: LmmsInstrument,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "instrument")]
+pub struct LmmsInstrument {
+    #[xml(attr = "name")]
+    pub name: String,
+
+    #[xml(child = "sf2player")]
+    pub sf2_player: Option<LmmsSf2Player>,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "sf2player")]
+pub struct LmmsSf2Player {
+    #[xml(attr = "src")]
+    pub src: String,
+
+    #[xml(attr = "bank")]
+    pub bank: usize,
+
+    #[xml(attr = "patch")]
+    pub patch: usize,
+
+    #[xml(attr = "gain")]
+    pub gain: f32,
+
+    #[xml(attr = "reverbOn")]
+    pub reverb_on: usize,
+
+    #[xml(attr = "reverbLevel")]
+    pub reverb_level: f32,
+
+    #[xml(attr = "reverbDamping")]
+    pub reverb_damping: f32,
+
+    #[xml(attr = "reverbWidth")]
+    pub reverb_width: f32,
+
+    #[xml(attr = "reverbRoomSize")]
+    pub reverb_room_size: f32,
+
+    #[xml(attr = "chorusOn")]
+    pub chorus_on: usize,
+
+    #[xml(attr = "chorusLevel")]
+    pub chorus_level: f32,
+
+    #[xml(attr = "chorusNum")]
+    pub chorus_num: usize,
+
+    #[xml(attr = "chorusDepth")]
+    pub chorus_depth: f32,
+
+    #[xml(attr = "chorusSpeed")]
+    pub chorus_speed: f32,
 }
 
 impl LmmsProject {
