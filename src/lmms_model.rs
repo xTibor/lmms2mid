@@ -51,6 +51,14 @@ pub struct LmmsHead {
 pub struct LmmsSong {
     #[xml(child = "trackcontainer")]
     pub track_container: LmmsTrackContainer,
+    // Skipped: track (automationtrack)
+    // Skipped: fxmixer
+    // Skipped: ControllerRackView
+    // Skipped: pianoroll
+    // Skipped: automationeditor
+    // Skipped: projectnotes
+    // Skipped: timeline
+    // Skipped: controllers
 }
 
 #[derive(Debug, XmlRead)]
@@ -144,7 +152,6 @@ pub struct LmmsInstrumentTrack {
 
     #[xml(child = "instrument")]
     pub instrument: LmmsInstrument,
-
     // Skipped: midicontrollers
     // Skipped: eldata
     // Skipped: chordcreator
