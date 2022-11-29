@@ -22,6 +22,9 @@ pub struct LmmsProject {
 
     #[xml(child = "head")]
     pub head: LmmsHead,
+
+    #[xml(child = "song")]
+    pub song: LmmsSong,
 }
 
 #[derive(Debug, XmlRead)]
@@ -41,6 +44,41 @@ pub struct LmmsHead {
 
     #[xml(attr = "mastervol")]
     pub master_volume: usize,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "song")]
+pub struct LmmsSong {
+    #[xml(child = "trackcontainer")]
+    pub track_container: LmmsTrackContainer,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "trackcontainer")]
+pub struct LmmsTrackContainer {
+    #[xml(attr = "visible")]
+    pub visible: usize,
+
+    #[xml(attr = "minimized")]
+    pub minimized: usize,
+
+    #[xml(attr = "maximized")]
+    pub maximized: usize,
+
+    #[xml(attr = "x")]
+    pub x: isize,
+
+    #[xml(attr = "y")]
+    pub y: isize,
+
+    #[xml(attr = "width")]
+    pub width: usize,
+
+    #[xml(attr = "height")]
+    pub height: usize,
+
+    #[xml(attr = "type")]
+    pub r#type: String,
 }
 
 impl LmmsProject {
