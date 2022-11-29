@@ -104,6 +104,9 @@ pub struct LmmsTrack {
 
     #[xml(child = "instrumenttrack")]
     pub instrument_track: LmmsInstrumentTrack,
+
+    #[xml(child = "pattern")]
+    pub patterns: Vec<LmmsPattern>,
 }
 
 #[derive(Debug, XmlRead)]
@@ -141,6 +144,13 @@ pub struct LmmsInstrumentTrack {
 
     #[xml(child = "instrument")]
     pub instrument: LmmsInstrument,
+
+    // Skipped: midicontrollers
+    // Skipped: eldata
+    // Skipped: chordcreator
+    // Skipped: arpeggiator
+    // Skipped: midiport
+    // Skipped: fxchain
 }
 
 #[derive(Debug, XmlRead)]
@@ -197,6 +207,47 @@ pub struct LmmsSf2Player {
 
     #[xml(attr = "chorusSpeed")]
     pub chorus_speed: f32,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "pattern")]
+pub struct LmmsPattern {
+    #[xml(attr = "name")]
+    pub name: String,
+
+    #[xml(attr = "muted")]
+    pub muted: usize,
+
+    #[xml(attr = "pos")]
+    pub position: usize,
+
+    #[xml(attr = "steps")]
+    pub steps: usize,
+
+    #[xml(attr = "type")]
+    pub r#type: usize,
+
+    #[xml(child = "note")]
+    pub notes: Vec<LmmsNote>,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "note")]
+pub struct LmmsNote {
+    #[xml(attr = "vol")]
+    pub volume: usize,
+
+    #[xml(attr = "pan")]
+    pub panning: isize,
+
+    #[xml(attr = "pos")]
+    pub position: usize,
+
+    #[xml(attr = "len")]
+    pub length: usize,
+
+    #[xml(attr = "key")]
+    pub key: usize,
 }
 
 impl LmmsProject {
