@@ -27,8 +27,8 @@ pub struct LmmsProject {
 impl LmmsProject {
     pub fn load_compressed(path: &Path) -> Result<Self, Box<dyn Error>> {
         let compressed_bin = fs::read(path)?;
-        let uncompressed_bin = decompress_to_vec_zlib(&compressed_bin[4..]).unwrap();
-        let uncompressed_xml = str::from_utf8(&uncompressed_bin).unwrap();
+        let uncompressed_bin = decompress_to_vec_zlib(&compressed_bin[4..])?;
+        let uncompressed_xml = str::from_utf8(&uncompressed_bin)?;
 
         Ok(LmmsProject::from_str(&uncompressed_xml)?)
     }
