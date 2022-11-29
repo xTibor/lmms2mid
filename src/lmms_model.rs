@@ -20,8 +20,27 @@ pub struct LmmsProject {
     #[xml(attr = "creatorversion")]
     pub creator_version: String,
 
-    //#[xml(child = "data")]
-    //pub data: SvData,
+    #[xml(child = "head")]
+    pub head: LmmsHead,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "head")]
+pub struct LmmsHead {
+    #[xml(attr = "timesig_denominator")]
+    pub time_signature_denominator: usize,
+
+    #[xml(attr = "timesig_numerator")]
+    pub time_signature_numerator: usize,
+
+    #[xml(attr = "bpm")]
+    pub bpm: usize,
+
+    #[xml(attr = "masterpitch")]
+    pub master_pitch: isize,
+
+    #[xml(attr = "mastervol")]
+    pub master_volume: usize,
 }
 
 impl LmmsProject {
