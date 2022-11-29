@@ -79,6 +79,28 @@ pub struct LmmsTrackContainer {
 
     #[xml(attr = "type")]
     pub r#type: String,
+
+    #[xml(child = "track")]
+    pub tracks: Vec<LmmsTrack>,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "track")]
+pub struct LmmsTrack {
+    #[xml(attr = "name")]
+    pub name: String,
+
+    #[xml(attr = "muted")]
+    pub muted: usize,
+
+    #[xml(attr = "mutedBeforeSolo")]
+    pub muted_before_solo: usize,
+
+    #[xml(attr = "type")]
+    pub r#type: usize,
+
+    #[xml(attr = "solo")]
+    pub solo: usize,
 }
 
 impl LmmsProject {
