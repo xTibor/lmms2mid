@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::ffi::OsStr;
 use std::path::Path;
 use std::{fs, str};
 
@@ -280,12 +281,20 @@ pub struct LmmsNote {
 }
 
 impl LmmsProject {
-    pub fn load_compressed(path: &Path) -> Result<Self, Box<dyn Error>> {
-        let compressed_bin = fs::read(path)?;
-        let uncompressed_bin = decompress_to_vec_zlib(&compressed_bin[4..])?;
-        let uncompressed_xml = str::from_utf8(&uncompressed_bin)?;
-
-        Ok(LmmsProject::from_str(uncompressed_xml)?)
+    pub fn load_from_path(path: &Path) -> Result<Self, Box<dyn Error>> {
+        match path.extension().and_then(OsStr::to_str) {
+            Some("mmp") => {
+                let uncompressed_xml = fs::read_to_string(path)?;
+                Ok(LmmsProject::from_str(&uncompressed_xml)?)
+            }
+            Some("mmpz") => {
+                let compressed_bin = fs::read(path)?;
+                let uncompressed_bin = decompress_to_vec_zlib(&compressed_bin[4..])?;
+                let uncompressed_xml = str::from_utf8(&uncompressed_bin)?;
+                Ok(LmmsProject::from_str(uncompressed_xml)?)
+            }
+            _ => Err("Not an LMMS project file".into()),
+        }
     }
 
     pub fn sf2_tracks(&self) -> impl Iterator<Item = &LmmsTrack> {

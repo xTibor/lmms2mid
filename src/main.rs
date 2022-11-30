@@ -21,7 +21,7 @@ const MIDI_MAX_POLYPHONY: usize = 24;
 #[derive(Debug, Parser)]
 #[clap(author, version)]
 struct Args {
-    /// Input LMMS project file (.mmpz)
+    /// Input LMMS project file (.mmp, .mmpz)
     input_path: PathBuf,
 
     /// Output MIDI file (.mid)
@@ -84,7 +84,7 @@ impl TrackEventKindExt for TrackEventKind<'_> {
 fn main() {
     let args = Args::parse();
     let lmms_project =
-        LmmsProject::load_compressed(&args.input_path).expect("Failed to load LMMS project file");
+        LmmsProject::load_from_path(&args.input_path).expect("Failed to load LMMS project file");
 
     // Sanity check for LMMS instrument/percussion track counts
     {
