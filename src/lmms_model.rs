@@ -74,13 +74,15 @@ pub struct LmmsHead {
 pub struct LmmsSong {
     #[xml(child = "trackcontainer")]
     pub track_container: LmmsTrackContainer,
+
+    #[xml(child = "timeline")]
+    pub timeline: LmmsTimeline,
     // Skipped: track (automationtrack)
     // Skipped: fxmixer
     // Skipped: ControllerRackView
     // Skipped: pianoroll
     // Skipped: automationeditor
     // Skipped: projectnotes
-    // Skipped: timeline
     // Skipped: controllers
 }
 
@@ -278,6 +280,22 @@ pub struct LmmsNote {
 
     #[xml(attr = "key")]
     pub key: usize,
+}
+
+#[derive(Debug, XmlRead)]
+#[xml(tag = "timeline")]
+pub struct LmmsTimeline {
+    #[xml(attr = "lpstate")]
+    pub loop_state: usize,
+
+    #[xml(attr = "lp0pos")]
+    pub loop_start: usize,
+
+    #[xml(attr = "lp1pos")]
+    pub loop_end: usize,
+
+    #[xml(attr = "stopbehaviour")]
+    pub stop_behaviour: Option<usize>,
 }
 
 impl LmmsProject {
