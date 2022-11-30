@@ -34,7 +34,7 @@ pub struct LmmsProject {
     pub r#type: String,
 
     #[xml(attr = "version")]
-    pub version: usize,
+    pub version: String,
 
     #[xml(attr = "creator")]
     pub creator: String,
@@ -124,7 +124,7 @@ pub struct LmmsTrack {
     pub muted: usize,
 
     #[xml(attr = "mutedBeforeSolo")]
-    pub muted_before_solo: usize,
+    pub muted_before_solo: Option<usize>,
 
     #[xml(attr = "type")]
     pub r#type: usize,
@@ -143,16 +143,13 @@ pub struct LmmsTrack {
 #[xml(tag = "instrumenttrack")]
 pub struct LmmsInstrumentTrack {
     #[xml(attr = "vol")]
-    pub volume: usize,
+    pub volume: f32,
 
     #[xml(attr = "pan")]
-    pub panning: isize,
+    pub panning: f32,
 
     #[xml(attr = "pitchrange")]
     pub pitch_range: usize,
-
-    #[xml(attr = "lastkey")]
-    pub last_key: usize,
 
     #[xml(attr = "fxch")]
     pub fx_channel: usize,
@@ -163,14 +160,17 @@ pub struct LmmsInstrumentTrack {
     #[xml(attr = "pitch")]
     pub pitch: f32,
 
-    #[xml(attr = "firstkey")]
-    pub first_key: usize,
-
     #[xml(attr = "basenote")]
     pub base_note: usize,
 
+    #[xml(attr = "firstkey")]
+    pub first_key: Option<usize>,
+
+    #[xml(attr = "lastkey")]
+    pub last_key: Option<usize>,
+
     #[xml(attr = "enablecc")]
-    pub enable_cc: usize,
+    pub enable_cc: Option<usize>,
 
     #[xml(child = "instrument")]
     pub instrument: LmmsInstrument,
