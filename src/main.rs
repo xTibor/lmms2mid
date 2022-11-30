@@ -4,8 +4,14 @@ mod lmms_model;
 use lmms_model::LmmsProject;
 
 use clap::Parser;
-use midly::num::{u15, u24, u28, u4};
-use midly::{Format, Header, MetaMessage, Smf, Timing, Track, TrackEvent, TrackEventKind};
+use midly::num::{u15, u24, u28, u4, u7};
+use midly::{
+    Format, Header, MetaMessage, MidiMessage, Smf, Timing, Track, TrackEvent, TrackEventKind,
+};
+
+const MIDI_CC_BANK_SELECT: u8 = 0;
+const MIDI_CC_VOLUME: u8 = 7;
+const MIDI_CC_PANNING: u8 = 10;
 
 /// A less broken MIDI-exporter for LMMS
 #[derive(Debug, Parser)]
@@ -76,7 +82,7 @@ fn main() {
     }
 
     // LMMS track -> MIDI channel assignment
-    let track_channel_assignment = {
+    let lmms_track_midi_channel = {
         let mut results = Vec::new();
 
         // Instrument tracks
@@ -110,7 +116,6 @@ fn main() {
     ));
 
     let mut midi_track = Track::new();
-    //let mut midi_track_events = Vec::new();
 
     if let Some(ref track_name) = args.track_name {
         midi_track.push(TrackEvent {
@@ -140,7 +145,78 @@ fn main() {
         ))),
     });
 
-    // TODO
+    // MIDI channel initialization
+
+    for (midi_channel, lmms_track) in lmms_track_midi_channel {
+        midi_track.push(TrackEvent {
+            delta: u28::from(0),
+            kind: TrackEventKind::Meta(MetaMessage::MidiChannel(midi_channel)),
+        });
+
+        if !lmms_track.name.is_empty() {
+            if !lmms_track.name.is_ascii() {
+                eprintln!(
+                    "warning: non-ASCII LMMS track name '{}'",
+                    lmms_track.name.escape_default(),
+                );
+                eprintln!("note: these track names may be mishandled by other music software");
+            }
+
+            midi_track.push(TrackEvent {
+                delta: u28::from(0),
+                kind: TrackEventKind::Meta(MetaMessage::InstrumentName(lmms_track.name.as_bytes())),
+            });
+        }
+
+        // Bank selection
+        midi_track.push(TrackEvent {
+            delta: u28::from(0),
+            kind: TrackEventKind::Midi {
+                channel: midi_channel,
+                message: MidiMessage::Controller {
+                    controller: u7::from(MIDI_CC_BANK_SELECT),
+                    value: u7::from(lmms_track.sf2_player().bank as u8),
+                },
+            },
+        });
+
+        // Preset selection
+        midi_track.push(TrackEvent {
+            delta: u28::from(0),
+            kind: TrackEventKind::Midi {
+                channel: midi_channel,
+                message: MidiMessage::ProgramChange {
+                    program: u7::from(lmms_track.sf2_player().patch as u8),
+                },
+            },
+        });
+
+        // Volume
+        midi_track.push(TrackEvent {
+            delta: u28::from(0),
+            kind: TrackEventKind::Midi {
+                channel: midi_channel,
+                message: MidiMessage::Controller {
+                    controller: u7::from(MIDI_CC_VOLUME),
+                    value: u7::from(0), // TODO: remap
+                },
+            },
+        });
+
+        // Panning
+        midi_track.push(TrackEvent {
+            delta: u28::from(0),
+            kind: TrackEventKind::Midi {
+                channel: midi_channel,
+                message: MidiMessage::Controller {
+                    controller: u7::from(MIDI_CC_PANNING),
+                    value: u7::from(0), // TODO: remap
+                },
+            },
+        });
+    }
+
+    //let mut midi_track_events = Vec::new();
 
     midi_track.push(TrackEvent {
         delta: u28::from(0),
