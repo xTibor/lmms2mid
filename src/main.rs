@@ -94,7 +94,7 @@ fn main() {
             .count();
 
         if lmms_sf2_instrument_track_count > 15 {
-            eprintln!("note: LMMS project has more SF2 instrument tracks than available MIDI channels ({lmms_sf2_instrument_track_count}/15)");
+            eprintln!("warning: LMMS project has more SF2 instrument tracks than available MIDI channels ({lmms_sf2_instrument_track_count}/15)");
             eprintln!("note: unassignable instrument tracks will be dropped");
         }
 
@@ -104,7 +104,7 @@ fn main() {
             .count();
 
         if lmms_sf2_percussion_track_count > 1 {
-            eprintln!("note: LMMS project should only have at most one SF2 percussion track (found {lmms_sf2_percussion_track_count} tracks)");
+            eprintln!("warning: LMMS project should only have at most one SF2 percussion track (found {lmms_sf2_percussion_track_count} tracks)");
             eprintln!("note: unassignable percussion tracks will be dropped");
         }
     }
