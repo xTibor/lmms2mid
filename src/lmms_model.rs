@@ -5,7 +5,27 @@ use std::{fs, str};
 use miniz_oxide::inflate::decompress_to_vec_zlib;
 use strong_xml::XmlRead;
 
-pub const LMMS_TICKS_PER_BEAT: usize = 12;
+// +-------+-------+
+// | LMMS  | LMMS  |
+// | ticks | note  |
+// +-------+-------+
+// |     1 | 1/192 |
+// |     2 | 1/96  |
+// |     3 | 1/64  |
+// |     4 | 1/48  |
+// |     6 | 1/32  |
+// |     8 | 1/24  |
+// |    12 | 1/16  |
+// |    16 | 1/12  |
+// |    24 | 1/8   |
+// |    32 | 1/6   |
+// |    48 | 1/4   |
+// |    64 | 1/3   |
+// |    96 | 1/2   |
+// |   192 | 1/1   |
+// +-------+-------+
+
+pub const LMMS_TICKS_PER_BAR: usize = 192;
 
 #[derive(Debug, XmlRead)]
 #[xml(tag = "lmms-project")]
