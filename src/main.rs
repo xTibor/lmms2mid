@@ -268,13 +268,20 @@ fn main() {
                 let ticks_start = lmms_pattern.position + lmms_note.position;
                 let ticks_end = ticks_start + lmms_note.length;
 
+                let mut note_key = lmms_note.key as isize;
+                note_key += 69 - lmms_track.instrument_track.base_note as isize;
+
+                if lmms_track.instrument_track.use_master_pitch == 1 {
+                    note_key += lmms_project.head.master_pitch;
+                };
+
                 midi_track_events.push(AbsoluteTrackEvent {
                     ticks: ticks_start,
                     ticks_event_start: ticks_start,
                     kind: TrackEventKind::Midi {
                         channel: *midi_channel,
                         message: MidiMessage::NoteOn {
-                            key: u7::from(lmms_note.key as u8),
+                            key: u7::from(note_key as u8),
                             vel: u7::from(127u8), // TODO: remap
                         },
                     },
@@ -286,7 +293,7 @@ fn main() {
                     kind: TrackEventKind::Midi {
                         channel: *midi_channel,
                         message: MidiMessage::NoteOff {
-                            key: u7::from(lmms_note.key as u8),
+                            key: u7::from(note_key as u8),
                             vel: u7::from(127u8), // TODO: remap
                         },
                     },
