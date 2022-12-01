@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::RangeInclusive;
 use std::path::PathBuf;
 
 mod lmms_model;
@@ -121,6 +122,15 @@ impl TrackEventKindExt for TrackEventKind<'_> {
             }
         )
     }
+}
+
+pub fn remap_clamp_range(
+    value: f32,
+    range_from: RangeInclusive<f32>,
+    range_to: RangeInclusive<f32>,
+) -> f32 {
+    let t = (value - range_from.start()) / (range_from.end() - range_from.start());
+    range_to.start() + t.clamp(0.0, 1.0) * (range_to.end() - range_to.start())
 }
 
 fn main() {
@@ -277,29 +287,41 @@ fn main() {
             });
         }
 
-        // Volume
-        midi_track.push(TrackEvent {
-            delta: u28::from(0),
-            kind: TrackEventKind::Midi {
-                channel: *midi_channel,
-                message: MidiMessage::Controller {
-                    controller: u7::from(MIDI_CC_VOLUME),
-                    value: u7::from(127), // TODO: remap
-                },
-            },
-        });
+        {
+            // TODO: How to handle 200% volume
+            let channel_volume =
+                remap_clamp_range(lmms_track.instrument_track.volume, 0.0..=100.0, 0.0..=127.0);
 
-        // Panning
-        midi_track.push(TrackEvent {
-            delta: u28::from(0),
-            kind: TrackEventKind::Midi {
-                channel: *midi_channel,
-                message: MidiMessage::Controller {
-                    controller: u7::from(MIDI_CC_PANNING),
-                    value: u7::from(64), // TODO: remap
+            midi_track.push(TrackEvent {
+                delta: u28::from(0),
+                kind: TrackEventKind::Midi {
+                    channel: *midi_channel,
+                    message: MidiMessage::Controller {
+                        controller: u7::from(MIDI_CC_VOLUME),
+                        value: u7::from(channel_volume as u8),
+                    },
                 },
-            },
-        });
+            });
+        }
+
+        {
+            let channel_panning = remap_clamp_range(
+                lmms_track.instrument_track.panning,
+                -100.0..=100.0,
+                0.0..=127.0,
+            );
+
+            midi_track.push(TrackEvent {
+                delta: u28::from(0),
+                kind: TrackEventKind::Midi {
+                    channel: *midi_channel,
+                    message: MidiMessage::Controller {
+                        controller: u7::from(MIDI_CC_PANNING),
+                        value: u7::from(channel_panning as u8),
+                    },
+                },
+            });
+        }
     }
 
     let mut midi_track_events = Vec::new();
@@ -317,6 +339,9 @@ fn main() {
                     note_key += lmms_project.head.master_pitch;
                 };
 
+                let note_velocity =
+                    remap_clamp_range(lmms_note.volume as f32, 0.0..=200.0, 0.0..=127.0);
+
                 midi_track_events.push(AbsoluteTrackEvent {
                     ticks: ticks_start,
                     ticks_event_start: ticks_start,
@@ -324,7 +349,7 @@ fn main() {
                         channel: *midi_channel,
                         message: MidiMessage::NoteOn {
                             key: u7::from(note_key as u8),
-                            vel: u7::from(127u8), // TODO: remap
+                            vel: u7::from(note_velocity as u8),
                         },
                     },
                 });
@@ -336,7 +361,7 @@ fn main() {
                         channel: *midi_channel,
                         message: MidiMessage::NoteOff {
                             key: u7::from(note_key as u8),
-                            vel: u7::from(127u8), // TODO: remap
+                            vel: u7::from(note_velocity as u8),
                         },
                     },
                 });
@@ -361,7 +386,7 @@ fn main() {
                         },
                     },
                 });
-            },
+            }
             MidiLoopStyle::EmidiLocal => {
                 midi_track_events.push(AbsoluteTrackEvent {
                     ticks: loop_start,
@@ -386,7 +411,7 @@ fn main() {
                         },
                     },
                 });
-            },
+            }
             MidiLoopStyle::EmidiGlobal => {
                 midi_track_events.push(AbsoluteTrackEvent {
                     ticks: loop_start,
@@ -411,7 +436,7 @@ fn main() {
                         },
                     },
                 });
-            },
+            }
             MidiLoopStyle::FinalFantasy => {
                 midi_track_events.push(AbsoluteTrackEvent {
                     ticks: loop_start,
@@ -424,7 +449,7 @@ fn main() {
                     ticks_event_start: loop_end,
                     kind: TrackEventKind::Meta(MetaMessage::Marker(b"loopend")),
                 });
-            },
+            }
         }
     }
 
