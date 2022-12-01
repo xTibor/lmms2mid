@@ -4,7 +4,7 @@ use std::path::PathBuf;
 mod lmms_model;
 use lmms_model::{LmmsProject, LMMS_TICKS_PER_BAR};
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use midly::num::{u15, u24, u28, u4, u7};
 use midly::{
     Format, Header, MetaMessage, MidiMessage, Smf, Timing, Track, TrackEvent, TrackEventKind,
@@ -15,11 +15,30 @@ const MIDI_CC_BANK_SELECT_FINE: u8 = 32;
 const MIDI_CC_VOLUME: u8 = 7;
 const MIDI_CC_PANNING: u8 = 10;
 
-const MIDI_CC_XMI_LOOP_START: u8 = 116;
-const MIDI_CC_XMI_LOOP_END: u8 = 117;
+const MIDI_CC_EMIDI_LOCAL_LOOP_START: u8 = 116;
+const MIDI_CC_EMIDI_LOCAL_LOOP_END: u8 = 117;
+
+const MIDI_CC_EMIDI_GLOBAL_LOOP_START: u8 = 118;
+const MIDI_CC_EMIDI_GLOBAL_LOOP_END: u8 = 119;
+
 const MIDI_CC_RPG_LOOP_START: u8 = 111;
 
 const MIDI_MAX_POLYPHONY: usize = 24;
+
+#[derive(Debug, Copy, Clone, ValueEnum)]
+enum MidiLoopStyle {
+    ///RPG Maker style loops with MIDI CC#111 events
+    RpgMaker,
+
+    /// EMIDI style loops with MIDI CC#116/117 events
+    EmidiLocal,
+
+    /// EMIDI style loops with MIDI CC#118/119 events
+    EmidiGlobal,
+
+    /// Final Fantasy style loops with "loopstart"/"loopend" MIDI marker events
+    FinalFantasy,
+}
 
 /// A less broken MIDI-exporter for LMMS
 #[derive(Debug, Parser)]
@@ -30,6 +49,10 @@ struct Args {
 
     /// Output MIDI file (.mid)
     output_path: PathBuf,
+
+    /// Loop style
+    #[arg(long)]
+    loop_style: Option<MidiLoopStyle>,
 
     /// Track name
     #[arg(long)]
@@ -321,60 +344,88 @@ fn main() {
         }
     }
 
-    if lmms_project.song.timeline.loop_state == 1 {
+    if let Some(loop_style) = args.loop_style {
         let loop_start = lmms_project.song.timeline.loop_start;
         let loop_end = lmms_project.song.timeline.loop_end;
 
-        // RPG Maker style loops
-        midi_track_events.push(AbsoluteTrackEvent {
-            ticks: loop_start,
-            ticks_event_start: loop_start,
-            kind: TrackEventKind::Midi {
-                channel: u4::from(0),
-                message: MidiMessage::Controller {
-                    controller: u7::from(MIDI_CC_RPG_LOOP_START),
-                    value: u7::from(0),
-                },
+        match loop_style {
+            MidiLoopStyle::RpgMaker => {
+                midi_track_events.push(AbsoluteTrackEvent {
+                    ticks: loop_start,
+                    ticks_event_start: loop_start,
+                    kind: TrackEventKind::Midi {
+                        channel: u4::from(0),
+                        message: MidiMessage::Controller {
+                            controller: u7::from(MIDI_CC_RPG_LOOP_START),
+                            value: u7::from(0),
+                        },
+                    },
+                });
             },
-        });
+            MidiLoopStyle::EmidiLocal => {
+                midi_track_events.push(AbsoluteTrackEvent {
+                    ticks: loop_start,
+                    ticks_event_start: loop_start,
+                    kind: TrackEventKind::Midi {
+                        channel: u4::from(0),
+                        message: MidiMessage::Controller {
+                            controller: u7::from(MIDI_CC_EMIDI_LOCAL_LOOP_START),
+                            value: u7::from(0),
+                        },
+                    },
+                });
 
-        // XMI style loops
-        midi_track_events.push(AbsoluteTrackEvent {
-            ticks: loop_start,
-            ticks_event_start: loop_start,
-            kind: TrackEventKind::Midi {
-                channel: u4::from(0),
-                message: MidiMessage::Controller {
-                    controller: u7::from(MIDI_CC_XMI_LOOP_START),
-                    value: u7::from(0),
-                },
+                midi_track_events.push(AbsoluteTrackEvent {
+                    ticks: loop_end,
+                    ticks_event_start: loop_end,
+                    kind: TrackEventKind::Midi {
+                        channel: u4::from(0),
+                        message: MidiMessage::Controller {
+                            controller: u7::from(MIDI_CC_EMIDI_LOCAL_LOOP_END),
+                            value: u7::from(0),
+                        },
+                    },
+                });
             },
-        });
+            MidiLoopStyle::EmidiGlobal => {
+                midi_track_events.push(AbsoluteTrackEvent {
+                    ticks: loop_start,
+                    ticks_event_start: loop_start,
+                    kind: TrackEventKind::Midi {
+                        channel: u4::from(0),
+                        message: MidiMessage::Controller {
+                            controller: u7::from(MIDI_CC_EMIDI_GLOBAL_LOOP_START),
+                            value: u7::from(0),
+                        },
+                    },
+                });
 
-        midi_track_events.push(AbsoluteTrackEvent {
-            ticks: loop_end,
-            ticks_event_start: loop_end,
-            kind: TrackEventKind::Midi {
-                channel: u4::from(0),
-                message: MidiMessage::Controller {
-                    controller: u7::from(MIDI_CC_XMI_LOOP_END),
-                    value: u7::from(0),
-                },
+                midi_track_events.push(AbsoluteTrackEvent {
+                    ticks: loop_end,
+                    ticks_event_start: loop_end,
+                    kind: TrackEventKind::Midi {
+                        channel: u4::from(0),
+                        message: MidiMessage::Controller {
+                            controller: u7::from(MIDI_CC_EMIDI_GLOBAL_LOOP_END),
+                            value: u7::from(0),
+                        },
+                    },
+                });
             },
-        });
+            MidiLoopStyle::FinalFantasy => {
+                midi_track_events.push(AbsoluteTrackEvent {
+                    ticks: loop_start,
+                    ticks_event_start: loop_start,
+                    kind: TrackEventKind::Meta(MetaMessage::Marker(b"loopstart")),
+                });
 
-        // Final Fantasy VII style loops
-        midi_track_events.push(AbsoluteTrackEvent {
-            ticks: loop_start,
-            ticks_event_start: loop_start,
-            kind: TrackEventKind::Meta(MetaMessage::Marker(b"loopstart")),
-        });
-
-        midi_track_events.push(AbsoluteTrackEvent {
-            ticks: loop_end,
-            ticks_event_start: loop_end,
-            kind: TrackEventKind::Meta(MetaMessage::Marker(b"loopend")),
-        });
+                midi_track_events.push(AbsoluteTrackEvent {
+                    ticks: loop_end,
+                    ticks_event_start: loop_end,
+                    kind: TrackEventKind::Meta(MetaMessage::Marker(b"loopend")),
+                });
+            },
+        }
     }
 
     midi_track_events.sort_by_key(
