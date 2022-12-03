@@ -289,6 +289,7 @@ fn main() {
 
         {
             // TODO: How to handle 200% volume
+            // TODO: Logarithmic volume
             let channel_volume =
                 remap_clamp_range(lmms_track.instrument_track.volume, 0.0..=100.0, 0.0..=127.0);
 
