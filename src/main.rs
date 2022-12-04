@@ -128,9 +128,10 @@ pub fn remap_clamp_range(
     value: f32,
     range_from: RangeInclusive<f32>,
     range_to: RangeInclusive<f32>,
+    transfer_fn: fn(f32) -> f32,
 ) -> f32 {
     let t = (value - range_from.start()) / (range_from.end() - range_from.start());
-    range_to.start() + t.clamp(0.0, 1.0) * (range_to.end() - range_to.start())
+    range_to.start() + transfer_fn(t.clamp(0.0, 1.0)) * (range_to.end() - range_to.start())
 }
 
 fn main() {
@@ -288,10 +289,12 @@ fn main() {
         }
 
         {
-            // TODO: How to handle 200% volume
-            // TODO: Logarithmic volume
-            let channel_volume =
-                remap_clamp_range(lmms_track.instrument_track.volume, 0.0..=100.0, 0.0..=127.0);
+            let channel_volume = remap_clamp_range(
+                lmms_track.instrument_track.volume,
+                0.0..=100.0,
+                0.0..=127.0,
+                |volume| volume.sqrt(),
+            );
 
             midi_track.push(TrackEvent {
                 delta: u28::from(0),
@@ -310,6 +313,7 @@ fn main() {
                 lmms_track.instrument_track.panning,
                 -100.0..=100.0,
                 0.0..=127.0,
+                |panning| panning,
             );
 
             midi_track.push(TrackEvent {
@@ -340,8 +344,12 @@ fn main() {
                     note_key += lmms_project.head.master_pitch;
                 };
 
-                let note_velocity =
-                    remap_clamp_range(lmms_note.volume as f32, 0.0..=200.0, 0.0..=127.0);
+                let note_velocity = remap_clamp_range(
+                    lmms_note.volume as f32,
+                    0.0..=200.0,
+                    0.0..=127.0,
+                    |velocity| velocity,
+                );
 
                 midi_track_events.push(AbsoluteTrackEvent {
                     ticks: ticks_start,
