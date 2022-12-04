@@ -53,7 +53,7 @@ struct Args {
 
     /// Loop style
     #[arg(long)]
-    loop_style: Option<MidiLoopStyle>,
+    loop_style: Vec<MidiLoopStyle>,
 
     /// Track name
     #[arg(long)]
@@ -378,7 +378,7 @@ fn main() {
         }
     }
 
-    if let Some(loop_style) = args.loop_style {
+    for loop_style in &args.loop_style {
         let loop_start = lmms_project.song.timeline.loop_start;
         let loop_end = lmms_project.song.timeline.loop_end;
 
